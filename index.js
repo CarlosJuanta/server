@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const connect = require("./database/connection");
 const docente = require("./routes/routeDocente");
+const estudiante = require("./routes/routeEstudiante");
 
 
 //conectamos a la BD con la función que exportamos
@@ -17,6 +18,7 @@ app.use(
       origin: [
         "*",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://localhost:5173",
@@ -38,6 +40,7 @@ app.use(express.json());
 
 //RUTAS FINALES
 app.use("/api", docente);
+app.use("/api", estudiante);
 
 //Iniciar el servidor
 app.listen(port, () => {
