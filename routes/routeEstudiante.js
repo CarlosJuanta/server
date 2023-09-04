@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Estudiante = require("../models/estudianteModel");
 
-//rutas para el crud
+// Ruta para agregar un estudiante
 router.post("/estudiante/add", async (req, res) => {
   try {
     const {
@@ -18,12 +18,10 @@ router.post("/estudiante/add", async (req, res) => {
       apellidoencargadoEstudiante,
       direccionencargadoEstudiante,
       telefonoencargadoEstudiante,
-      correoencargadoEstudiante,
-      estadoEstudiante
-
+      correencargadoEstudiante,
+      estadoEstudiante,
     } = req.body;
 
-    //pasarlo a la base de datos
     const estudiante = new Estudiante({
       cuiEstudiante,
       nombreEstudiante,
@@ -37,8 +35,8 @@ router.post("/estudiante/add", async (req, res) => {
       apellidoencargadoEstudiante,
       direccionencargadoEstudiante,
       telefonoencargadoEstudiante,
-      correoencargadoEstudiante,
-      estadoEstudiante
+      correencargadoEstudiante,
+      estadoEstudiante,
     });
 
     const resultado = await estudiante.save();
@@ -49,7 +47,7 @@ router.post("/estudiante/add", async (req, res) => {
   }
 });
 
-//////////////////////
+// Ruta para obtener todos los estudiantes activos
 router.get("/estudiante/getall", async (req, res) => {
   try {
     const resultado = await Estudiante.find().where({ estadoEstudiante: true }).sort({ nombreEstudiante: 1 });
@@ -59,7 +57,23 @@ router.get("/estudiante/getall", async (req, res) => {
   }
 });
 
-/////////////////////
+// Ruta para obtener la información de un estudiante por su ID
+router.get("/estudiante/get/:id", async (req, res) => {
+  try {
+    const idEstudiante = req.params.id;
+    const resultado = await Estudiante.findById(idEstudiante).where({ estadoEstudiante: true });
+
+    if (!resultado) {
+      return res.status(404).json({ msg: "Estudiante no encontrado" });
+    }
+
+    res.status(200).json({ resultado });
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error de tipo: " + error });
+  }
+});
+
+// Ruta para actualizar un estudiante por su ID
 router.put("/estudiante/update/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -74,7 +88,7 @@ router.put("/estudiante/update/:id", async (req, res) => {
   }
 });
 
-/////////////////////
+// Ruta para eliminar un estudiante por su ID
 router.put("/estudiante/delete/:id", async (req, res) => {
   try {
     const id = req.params.id;
