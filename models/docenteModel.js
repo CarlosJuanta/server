@@ -1,15 +1,23 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
 const docenteSchema = new Schema({
-  cuiDocente: String,
+  cuiDocente: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   nombreDocente: String,
   apellidoDocente: String,
   telefonoDocente: Number,
   correoDocente: String,
   direccionDocente: String,
   nacionalidadDocente: String,
-  estadoDocente: { default: true, type: Boolean },
+  estadoDocente: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-module.exports = mongoose.model("Docente", docenteSchema);
+module.exports = mongoose.model('Docente', docenteSchema);
+
+
