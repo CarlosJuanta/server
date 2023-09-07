@@ -16,6 +16,7 @@ const estudianteSchema = new Schema({
     telefonoencargadoEstudiante: String,
     correencargadoEstudiante: String,
     estadoEstudiante: { default: true, type: Boolean },
+    
 });
 
 module.exports = mongoose.model("Estudiante", estudianteSchema);
