@@ -11,6 +11,7 @@ const cursoSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectID,
     ref: 'Grado',
    }],
+  
 });
 
 module.exports = mongoose.model('Curso', cursoSchema);

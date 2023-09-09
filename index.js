@@ -6,6 +6,8 @@ const docente = require("./routes/routeDocente");
 const estudiante = require("./routes/routeEstudiante");
 const grado = require("./routes/routeGrado");
 const curso = require("./routes/routeCurso");
+const asignacionGrado = require("./routes/routeAsignacionGrado");
+
 
 
 //conectamos a la BD con la función que exportamos
@@ -45,6 +47,8 @@ app.use("/api", docente);
 app.use("/api", estudiante);
 app.use("/api", grado);
 app.use("/api", curso);
+app.use("/api", asignacionGrado);
+
 
 //Iniciar el servidor
 app.listen(port, () => {

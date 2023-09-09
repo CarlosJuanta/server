@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Estudiante = require("../models/estudianteModel");
-
+const Grado = require("../models/gradoModel");
 // Ruta para agregar un estudiante
 router.post("/estudiante/add", async (req, res) => {
   try {
@@ -19,8 +19,16 @@ router.post("/estudiante/add", async (req, res) => {
       direccionencargadoEstudiante,
       telefonoencargadoEstudiante,
       correencargadoEstudiante,
+      codigoGrado,
       estadoEstudiante,
     } = req.body;
+     
+     // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
+     const gradoExistente = await Grado.findOne({ codigoGrado });
+   
+     if (!gradoExistente) {
+       return res.status(400).json({ msg: "El grado no existe en la base de datos" });
+     }
 
     const estudiante = new Estudiante({
       cuiEstudiante,
@@ -36,6 +44,7 @@ router.post("/estudiante/add", async (req, res) => {
       direccionencargadoEstudiante,
       telefonoencargadoEstudiante,
       correencargadoEstudiante,
+      codigoGrado: gradoExistente._id, // Asigna el ObjectId del grado
       estadoEstudiante,
     });
 
@@ -47,6 +56,26 @@ router.post("/estudiante/add", async (req, res) => {
   }
 });
 
+////obtener cursos por grado
+router.post("/estudiante/getbygrado", async (req, res) => {
+  try {
+    const { codigoGrado } = req.body;
+
+    // Verifica si el grado con el código proporcionado existe en la base de datos
+    const gradoExistente = await Grado.findOne({ codigoGrado });
+
+    if (!gradoExistente) {
+      return res.status(400).json({ msg: "El grado no existe en la base de datos" });
+    }
+
+    // Busca los cursos que están asignados a este grado
+    const gradosAsignados = await Estudiante.find({ codigoGrado: gradoExistente._id })
+    .populate("codigoGrado", "codigoGrado nombreGrado")
+    res.status(200).json({gradosAsignados});
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error de tipo: " + error });
+  }
+}); 
 // Ruta para obtener todos los estudiantes activos
 router.get("/estudiante/getall", async (req, res) => {
   try {

@@ -15,7 +15,7 @@ router.post("/curso/add", async (req, res) => {
 
     // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
     const gradoExistente = await Grado.findOne({ codigoGrado });
-
+   
     if (!gradoExistente) {
       return res.status(400).json({ msg: "El grado no existe en la base de datos" });
     }
@@ -36,7 +36,27 @@ router.post("/curso/add", async (req, res) => {
   }
 });
 
-// Ruta para obtener todos los grados
+//obtener cursos por grado
+router.post("/curso/getbygrado", async (req, res) => {
+  try {
+    const { codigoGrado } = req.body;
+
+    // Verifica si el grado con el código proporcionado existe en la base de datos
+    const gradoExistente = await Grado.findOne({ codigoGrado });
+
+    if (!gradoExistente) {
+      return res.status(400).json({ msg: "El grado no existe en la base de datos" });
+    }
+
+    // Busca los cursos que están asignados a este grado
+    const cursosAsignados = await Curso.find({ codigoGrado: gradoExistente._id })
+    .populate("codigoGrado", "codigoGrado nombreGrado descripcionGrado seccionGrado")
+    res.status(200).json({ cursos: cursosAsignados });
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error de tipo: " + error });
+  }
+});
+
 // Ruta para obtener todos los grados con datos completos de docente asignado
 router.get("/curso/getall", async (req, res) => {
     try {
