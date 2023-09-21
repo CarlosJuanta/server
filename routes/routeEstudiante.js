@@ -54,13 +54,44 @@ router.post("/estudiante/add", async (req, res) => {
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
   }
+}); 
+
+
+//agrega un grado más al estudiante
+// Ruta para agregar más grados a un estudiante existente
+router.post("/estudiante/agregarGrado/:id", async (req, res) => {
+  try {
+    const idEstudiante = req.params.id;
+    const { codigoGrado } = req.body;
+
+    // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
+    const gradoExistente = await Grado.findOne({ codigoGrado });
+
+    if (!gradoExistente) {
+      return res.status(400).json({ msg: "El grado no existe en la base de datos" });
+    }
+
+    // Verifica si el estudiante existe en la base de datos y agrega el grado
+    const updateEstudiante = await Estudiante.findByIdAndUpdate(idEstudiante,
+     {$push: {codigoGrado: gradoExistente}},
+     {new: true}
+    );
+    
+    if (!updateEstudiante) {
+      return res.status(404).json({ msg: "El estudiante no existe en la base de datos" });
+    }
+
+    res.status(200).json({ message: "Nuevo grado añadido al estudiante", estudiante: updateEstudiante });
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error de tipo: " + error }) ;
+  }
 });
 
 ////obtener cursos por grado
 router.post("/estudiante/getbygrado", async (req, res) => {
   try {
     const { codigoGrado } = req.body;
-
+    
     // Verifica si el grado con el código proporcionado existe en la base de datos
     const gradoExistente = await Grado.findOne({ codigoGrado });
 
