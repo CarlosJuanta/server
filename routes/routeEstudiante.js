@@ -110,7 +110,8 @@ router.post("/estudiante/getbygrado", async (req, res) => {
 // Ruta para obtener todos los estudiantes activos
 router.get("/estudiante/getall", async (req, res) => {
   try {
-    const resultado = await Estudiante.find().where({ estadoEstudiante: true }).sort({ nombreEstudiante: 1 });
+    const resultado = await Estudiante.find().where({ estadoEstudiante: true }).sort({ nombreEstudiante: 1 })
+    .populate("codigoGrado", "codigoGrado nombreGrado");
     res.status(200).json({ resultado });
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
