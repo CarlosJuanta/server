@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Estudiante = require("../models/estudianteModel");
 const Grado = require("../models/gradoModel");
+const Asistencia = require("../models/asistenciaModel");
+
 // Ruta para agregar un estudiante
 router.post("/estudiante/add", async (req, res) => {
   try {
@@ -21,14 +23,15 @@ router.post("/estudiante/add", async (req, res) => {
       correencargadoEstudiante,
       codigoGrado,
       estadoEstudiante,
+      asistencia,
     } = req.body;
-     
-     // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
-     const gradoExistente = await Grado.findOne({ codigoGrado });
-   
-     if (!gradoExistente) {
-       return res.status(400).json({ msg: "El grado no existe en la base de datos" });
-     }
+
+    // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
+    const gradoExistente = await Grado.findOne({ codigoGrado });
+
+    if (!gradoExistente) {
+      return res.status(400).json({ msg: "El grado no existe en la base de datos" });
+    }
 
     const estudiante = new Estudiante({
       cuiEstudiante,
@@ -46,6 +49,7 @@ router.post("/estudiante/add", async (req, res) => {
       correencargadoEstudiante,
       codigoGrado: gradoExistente._id, // Asigna el ObjectId del grado
       estadoEstudiante,
+      asistencia,
     });
 
     const resultado = await estudiante.save();
@@ -54,11 +58,9 @@ router.post("/estudiante/add", async (req, res) => {
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
   }
-}); 
+});
 
-
-//agrega un grado más al estudiante
-// Ruta para agregar más grados a un estudiante existente
+// Ruta para agregar un grado a un estudiante existente
 router.post("/estudiante/agregarGrado/:id", async (req, res) => {
   try {
     const idEstudiante = req.params.id;
@@ -73,19 +75,55 @@ router.post("/estudiante/agregarGrado/:id", async (req, res) => {
 
     // Verifica si el estudiante existe en la base de datos y agrega el grado
     const updateEstudiante = await Estudiante.findByIdAndUpdate(idEstudiante,
-     {$push: {codigoGrado: gradoExistente}},
-     {new: true}
+      { $push: { codigoGrado: gradoExistente } },
+      { new: true }
     );
-    
+
     if (!updateEstudiante) {
       return res.status(404).json({ msg: "El estudiante no existe en la base de datos" });
     }
 
     res.status(200).json({ message: "Nuevo grado añadido al estudiante", estudiante: updateEstudiante });
   } catch (error) {
-    res.status(500).json({ msg: "Hubo un error de tipo: " + error }) ;
+    res.status(500).json({ msg: "Hubo un error de tipo: " + error });
   }
 });
+
+// Ruta para agregar asistencia a un estudiante existente
+router.post("/estudiante/agregarAsistencia/:id", async (req, res) => {
+  try {
+    const idEstudiante = req.params.id;
+    const { estado, fecha } = req.body;
+
+    // Verifica si el estudiante existe en la base de datos
+    const estudianteExistente = await Estudiante.findById(idEstudiante);
+
+    if (!estudianteExistente) {
+      return res.status(404).json({ msg: "El estudiante no existe en la base de datos" });
+    }
+
+    // Crea un nuevo objeto de asistencia con el estado y la fecha proporcionados
+    const nuevaAsistencia = new Asistencia({
+      estado,
+      fecha,
+      estudiante: estudianteExistente._id, // Establece la referencia al estudiante
+    });
+
+    // Guarda la nueva asistencia en la base de datos
+    await nuevaAsistencia.save();
+
+    // Agrega la referencia de la asistencia al estudiante
+    estudianteExistente.asistencias.push(nuevaAsistencia._id);
+
+    // Guarda el estudiante actualizado
+    await estudianteExistente.save();
+
+    res.status(200).json({ message: "Asistencia añadida al estudiante", asistencia: nuevaAsistencia });
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error: " + error });
+  }
+});
+
 
 ////obtener cursos por grado
 router.post("/estudiante/getbygrado", async (req, res) => {
@@ -102,6 +140,7 @@ router.post("/estudiante/getbygrado", async (req, res) => {
     // Busca los cursos que están asignados a este grado
     const gradosAsignados = await Estudiante.find({ codigoGrado: gradoExistente._id })
     .populate("codigoGrado", "codigoGrado nombreGrado")
+    .populate ("asistencias", "estado fecha");
     res.status(200).json({gradosAsignados});
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
@@ -111,19 +150,20 @@ router.post("/estudiante/getbygrado", async (req, res) => {
 router.get("/estudiante/getall", async (req, res) => {
   try {
     const resultado = await Estudiante.find().where({ estadoEstudiante: true }).sort({ nombreEstudiante: 1 })
-    .populate("codigoGrado", "codigoGrado nombreGrado");
+    .populate("codigoGrado", "codigoGrado nombreGrado")
+    .populate ("asistencias", "estado fecha");
     res.status(200).json({ resultado });
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
   }
-});
+});  
 
 // Ruta para obtener la información de un estudiante por su ID
 router.get("/estudiante/get/:id", async (req, res) => {
   try {
     const idEstudiante = req.params.id;
-    const resultado = await Estudiante.findById(idEstudiante).where({ estadoEstudiante: true });
-
+    const resultado = await Estudiante.findById(idEstudiante).where({ estadoEstudiante: true })
+    .populate ("asistencias", "estado fecha");
     if (!resultado) {
       return res.status(404).json({ msg: "Estudiante no encontrado" });
     }

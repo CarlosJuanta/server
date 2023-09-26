@@ -24,7 +24,10 @@ const estudianteSchema = new Schema({
         ref: 'Grado',
        }],
     estadoEstudiante: { default: true, type: Boolean },
-    
+    asistencias: [{
+        type: mongoose.Schema.Types.ObjectID,
+        ref: 'Asistencia',
+      }], 
 });
 
 module.exports = mongoose.model("Estudiante", estudianteSchema);
