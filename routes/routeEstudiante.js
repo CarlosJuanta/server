@@ -3,6 +3,8 @@ const router = express.Router();
 const Estudiante = require("../models/estudianteModel");
 const Grado = require("../models/gradoModel");
 const Asistencia = require("../models/asistenciaModel");
+const Reporte = require("../models/reporteModel");
+const Curso = require("../models/cursoModel");
 
 // Ruta para agregar un estudiante
 router.post("/estudiante/add", async (req, res) => {
@@ -24,6 +26,8 @@ router.post("/estudiante/add", async (req, res) => {
       codigoGrado,
       estadoEstudiante,
       asistencia,
+      reporte,
+      notas,
     } = req.body;
 
     // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
@@ -50,6 +54,8 @@ router.post("/estudiante/add", async (req, res) => {
       codigoGrado: gradoExistente._id, // Asigna el ObjectId del grado
       estadoEstudiante,
       asistencia,
+      reporte,
+      notas,
     });
 
     const resultado = await estudiante.save();
@@ -108,21 +114,47 @@ router.post("/estudiante/agregarAsistencia/:id", async (req, res) => {
       fecha,
       estudiante: estudianteExistente._id, // Establece la referencia al estudiante
     });
-
     // Guarda la nueva asistencia en la base de datos
     await nuevaAsistencia.save();
-
     // Agrega la referencia de la asistencia al estudiante
     estudianteExistente.asistencias.push(nuevaAsistencia._id);
-
     // Guarda el estudiante actualizado
     await estudianteExistente.save();
-
     res.status(200).json({ message: "Asistencia añadida al estudiante", asistencia: nuevaAsistencia });
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error: " + error });
   }
+}); 
+
+// Ruta para agregar un reporte a un estudiante existente
+
+router.post("/estudiante/agregarReporte/:id", async (req, res) => { 
+try {
+    const idEstudiante = req.params.id;
+    const { motivo, descripcion } = req.body;
+// Verifica si el estudiante existe en la base de datos
+const estudianteExistente = await Estudiante.findById(idEstudiante);
+if (!estudianteExistente) {
+      return res.status(404).json({ msg: "El estudiante no existe en la base de datos" });
+    }
+// Crea un nuevo objeto de reporte con el motivo y la descripcion proporcionados
+    const nuevoReporte = new Reporte({
+      motivo,
+      descripcion,
+      estudiante: estudianteExistente._id, // Establece la referencia al estudiante
+    });
+    // Guarda el nuevo reporte en la base de datos
+    await nuevoReporte.save();
+    // Agrega la referencia del reporte al estudiante
+    estudianteExistente.reportes.push(nuevoReporte._id);
+    // Guarda el estudiante actualizado
+    await estudianteExistente.save();
+    res.status(200).json({ message: "Reporte añadido al estudiante", reporte: nuevoReporte });
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error: " + error });
+  }
 });
+
 
 
 ////obtener cursos por grado
@@ -140,7 +172,15 @@ router.post("/estudiante/getbygrado", async (req, res) => {
     // Busca los cursos que están asignados a este grado
     const gradosAsignados = await Estudiante.find({ codigoGrado: gradoExistente._id })
     .populate("codigoGrado", "codigoGrado nombreGrado")
-    .populate ("asistencias", "estado fecha");
+    .populate ("asistencias", "estado fecha")
+    .populate ("reportes", "motivo descripcion")
+    .populate ({
+      path: "notas",
+      populate: {
+        path: "curso",
+        model: "Curso", // Reemplaza 'Curso' con el nombre del modelo de cursos
+      },
+    })
     res.status(200).json({gradosAsignados});
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
@@ -151,7 +191,9 @@ router.get("/estudiante/getall", async (req, res) => {
   try {
     const resultado = await Estudiante.find().where({ estadoEstudiante: true }).sort({ nombreEstudiante: 1 })
     .populate("codigoGrado", "codigoGrado nombreGrado")
-    .populate ("asistencias", "estado fecha");
+    .populate ("asistencias", "estado fecha")
+    .populate ("reportes", "motivo descripcion") 
+    .populate ("notas", "curso año mes bloque nota");
     res.status(200).json({ resultado });
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
@@ -163,7 +205,16 @@ router.get("/estudiante/get/:id", async (req, res) => {
   try {
     const idEstudiante = req.params.id;
     const resultado = await Estudiante.findById(idEstudiante).where({ estadoEstudiante: true })
-    .populate ("asistencias", "estado fecha");
+    .populate ("asistencias", "estado fecha")
+    .populate ("reportes", "motivo descripcion")
+    .populate ({
+      path: "notas",
+      populate: {
+        path: "curso",
+        model: "Curso", // Reemplaza 'Curso' con el nombre del modelo de cursos
+      },
+    })
+   
     if (!resultado) {
       return res.status(404).json({ msg: "Estudiante no encontrado" });
     }
@@ -202,6 +253,50 @@ router.put("/estudiante/delete/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: al eliminar" + error });
   }
+}); 
+
+// Ruta para agregar notas a un estudiante
+router.post("/estudiante/notas/:id", async (req, res) => {
+  try {
+    const estudianteId = req.params.id;
+    const { cursoId, bloque, nota } = req.body;
+
+    // Encuentra el estudiante por su ID
+    const estudiante = await Estudiante.findById(estudianteId);
+
+    if (!estudiante) {
+      return res.status(404).json({ message: "Estudiante no encontrado" });
+    }
+
+    // Busca el curso en las notas del estudiante
+    const cursoNota = estudiante.notas.find((nota) => nota.curso.equals(cursoId));
+
+    if (cursoNota) {
+      // Si el curso ya existe, agrega el bloque y la nota al subarreglo de notas
+      cursoNota.notas.push({ bloque, nota });
+    } else {
+      // Si el curso no existe, crea un nuevo objeto de curso y notas
+      const nuevoCursoNota = {
+        curso: cursoId,
+        notas: [{ bloque, nota,  año: new Date().getFullYear(),  mes: new Date().getMonth() + 1 }],
+       
+      };
+
+      // Agrega el nuevo curso y notas al arreglo de notas
+      estudiante.notas.push(nuevoCursoNota);
+    }
+
+    // Guarda el estudiante actualizado en la base de datos
+    await estudiante.save();
+
+    res.status(200).json({ message: "Notas agregadas exitosamente" });
+  } catch (error) {
+    res.status(500).json({
+      messageDev: "No se pudieron agregar las notas al estudiante",
+      messageSys: error.message,
+    });
+  }
 });
+
 
 module.exports = router;
