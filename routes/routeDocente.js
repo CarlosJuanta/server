@@ -39,7 +39,7 @@ router.post("/docente/add", async (req, res) => {
 //////////////////////
 router.get("/docente/getall", async (req, res) => {
   try {
-    const resultado = await Docente.find().where({ estadoDocente: true }).sort({ nombreDocente: 1 });
+    const resultado = await Docente.find().sort({ nombreDocente: 1 });
     res.status(200).json({ resultado });
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });

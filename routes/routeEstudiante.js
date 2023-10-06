@@ -70,7 +70,7 @@ router.post("/estudiante/add", async (req, res) => {
 router.post("/estudiante/agregarGrado/:id", async (req, res) => {
   try {
     const idEstudiante = req.params.id;
-    const { codigoGrado } = req.body;
+    const { codigoGrado } = req.body
 
     // Verifica si el grado con codigoGrado proporcionado existe en la base de datos
     const gradoExistente = await Grado.findOne({ codigoGrado });
@@ -93,7 +93,40 @@ router.post("/estudiante/agregarGrado/:id", async (req, res) => {
   } catch (error) {
     res.status(500).json({ msg: "Hubo un error de tipo: " + error });
   }
+}); 
+
+// Ruta para quitar un grado de un estudiante existente
+router.delete("/estudiante/quitarGrado/:id", async (req, res) => {
+  try {
+    const idEstudiante = req.params.id;
+    const { codigoGrado } = req.body;
+
+    // Verifica si el estudiante existe en la base de datos
+    const estudianteExistente = await Estudiante.findById(idEstudiante);
+
+    if (!estudianteExistente) {
+      return res.status(404).json({ msg: "El estudiante no existe en la base de datos" });
+    }
+
+    // Busca el índice del grado que deseas quitar en el array de código de grados del estudiante
+    const gradoIndex = estudianteExistente.codigoGrado.indexOf(codigoGrado);
+
+    if (gradoIndex === -1) {
+      return res.status(400).json({ msg: "El grado no está asociado al estudiante" });
+    }
+
+    // Quita el grado del array de código de grados del estudiante
+    estudianteExistente.codigoGrado.splice(gradoIndex, 1);
+
+    // Guarda la actualización en la base de datos
+    const updatedEstudiante = await estudianteExistente.save();
+
+    res.status(200).json({ message: "Grado quitado del estudiante", estudiante: updatedEstudiante });
+  } catch (error) {
+    res.status(500).json({ msg: "Hubo un error de tipo: " + error });
+  }
 });
+
 
 // Ruta para agregar asistencia a un estudiante existente
 router.post("/estudiante/agregarAsistencia/:id", async (req, res) => {
@@ -174,7 +207,7 @@ router.post("/estudiante/getbygrado", async (req, res) => {
     .populate("codigoGrado", "codigoGrado nombreGrado")
     .populate ("asistencias", "estado fecha")
     .populate ("reportes", "motivo descripcion")
-    .populate ({
+     .populate ({
       path: "notas",
       populate: {
         path: "curso",
@@ -189,7 +222,7 @@ router.post("/estudiante/getbygrado", async (req, res) => {
 // Ruta para obtener todos los estudiantes activos
 router.get("/estudiante/getall", async (req, res) => {
   try {
-    const resultado = await Estudiante.find().where({ estadoEstudiante: true }).sort({ nombreEstudiante: 1 })
+    const resultado = await Estudiante.find().sort({ nombreEstudiante: 1 })
     .populate("codigoGrado", "codigoGrado nombreGrado")
     .populate ("asistencias", "estado fecha")
     .populate ("reportes", "motivo descripcion") 
@@ -204,7 +237,7 @@ router.get("/estudiante/getall", async (req, res) => {
 router.get("/estudiante/get/:id", async (req, res) => {
   try {
     const idEstudiante = req.params.id;
-    const resultado = await Estudiante.findById(idEstudiante).where({ estadoEstudiante: true })
+    const resultado = await Estudiante.findById(idEstudiante)
     .populate ("asistencias", "estado fecha")
     .populate ("reportes", "motivo descripcion")
     .populate ({
