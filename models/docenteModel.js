@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const docenteSchema = new Schema({
   cuiDocente: {
@@ -16,8 +16,18 @@ const docenteSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  rol: {
+    type: String,
+  },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
 });
 
-module.exports = mongoose.model('Docente', docenteSchema);
-
-
+module.exports = mongoose.model("Docente", docenteSchema);
