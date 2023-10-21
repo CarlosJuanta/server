@@ -48,7 +48,7 @@ router.get("/docente/getall", async (req, res) => {
     const resultado = await Docente.find().sort({ nombreDocente: 1 });
     res.status(200).json({ resultado });
   } catch (error) {
-    res.status(500).json({ msg: "Hubo un error de tipo: " + error });
+    res.status(403).json({ msg: "Hubo un error de tipo: " + error });
   }
 });
 
@@ -95,11 +95,9 @@ router.post("/docente/getbyusername", async (req, res) => {
 
     // Verificar si el campo "estadoDocente" del docente es verdadero
     if (!docente.estadoDocente) {
-      return res
-        .status(403)
-        .json({
-          message: "El docente ha sido eliminado, contacte al administrador",
-        });
+      return res.status(403).json({
+        message: "El docente ha sido eliminado, contacte al administrador",
+      });
     }
 
     // Verificar si la contraseña coincide con la almacenada en la base de datos
