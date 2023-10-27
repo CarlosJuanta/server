@@ -27,6 +27,7 @@ app.use(
       "127.0.0.1:3000",
       "https://sleepy-purse-fox.cyclic.app",
       "https://aquamarine-pithivier-0a96ae.netlify.app",
+      "https://escuelajoaquinpalma.netlify.app",
       "https://*.netlify.app",
       "*.netlify.app",
       "*.netlify.*",
