@@ -245,7 +245,7 @@ router.post("/estudiante/getbygrado", async (req, res) => {
       codigoGrado: gradoExistente._id,
     })
       .sort({ apellidoEstudiante: 1 })
-      .populate("codigoGrado", "codigoGrado nombreGrado")
+      .populate("codigoGrado", "codigoGrado nombreGrado seccionGrado")
       .populate("asistencias", "estado fecha")
       .populate("reportes", "motivo descripcion fecha")
       .populate({
@@ -265,7 +265,7 @@ router.get("/estudiante/getall", async (req, res) => {
   try {
     const resultado = await Estudiante.find()
       .sort({ nombreEstudiante: 1 })
-      .populate("codigoGrado", "codigoGrado nombreGrado")
+      .populate("codigoGrado", "codigoGrado nombreGrado seccionGrado")
       .populate("asistencias", "estado fecha")
       .populate("reportes", "motivo descripcion")
       .populate("notas", "curso año mes bloque nota");
